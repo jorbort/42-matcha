@@ -1,0 +1,9 @@
+FROM golang:1.24rc1-bookworm
+
+WORKDIR /app
+
+COPY . /app
+
+EXPOSE 3000
+
+RUN go run ./cmd/web
