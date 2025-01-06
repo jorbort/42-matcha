@@ -1,9 +1,15 @@
-FROM golang:1.24rc1-bookworm
+FROM golang:1.23.4-bookworm
 
 WORKDIR /app
 
+COPY go.sh /app/go.sh
+RUN chmod +x /app/go.sh
+
 COPY . /app
+
+RUN apt-get update && apt-get install -y netcat-openbsd
 
 EXPOSE 3000
 
-RUN go run ./cmd/web
+ENTRYPOINT ["/app/go.sh"]
+

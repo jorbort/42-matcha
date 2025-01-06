@@ -9,7 +9,9 @@ services:
       - postgres
     networks:
       - matcha
-    restart: always  
+    restart: always
+    env_file:
+      - .env
   postgres:
     build: ./postgres
     restart: always
