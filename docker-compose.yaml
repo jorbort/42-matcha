@@ -25,6 +25,14 @@ services:
       - matcha
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+  adminer_go:
+    container_name: adminer_go
+    image: adminer
+    restart: always
+    ports:
+      - 8042:8080
+    networks:
+      - matcha
 
 volumes:
   postgres_data:

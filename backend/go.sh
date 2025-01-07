@@ -14,6 +14,6 @@ fi
 go install github.com/pressly/goose/v3/cmd/goose@latest
 # aqui se ejecutaran las migraciones de la base de datos cuando las tenga
 #goose create add_users_table sql
-#goose postgres "postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$DATABASE_HOST:$SQL_PORT/$POSTGRES_DB?sslmode=disable" up
+goose up
 
 go run ./cmd/web
