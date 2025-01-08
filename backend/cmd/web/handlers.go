@@ -4,9 +4,11 @@ import(
 	"net/http"
 	"html/template"
 	"log"
+	"github.com/jorbort/42-matcha/internals/models"
+	"encoding/json"
 )
 
-func home(w http.ResponseWriter, r *http.Request) {
+func (app *aplication)home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/html")
 
 	ts, err := template.ParseFiles("ui/html/index.html")
@@ -24,6 +26,17 @@ func home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func CreateUser(w http.ResponseWriter, r *http.Request) {
-	
-// }
+func (app *aplication)CreateUser(w http.ResponseWriter, r *http.Request) {
+	var user models.User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = app.models.CreateUser(r.Context(), &user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
