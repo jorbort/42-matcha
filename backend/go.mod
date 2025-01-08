@@ -1,4 +1,4 @@
-module github.com/jorbort/42-matcha
+module github.com/jorbort/42-matcha/backend
 
 go 1.23.4
 

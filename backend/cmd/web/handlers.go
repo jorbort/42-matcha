@@ -4,7 +4,7 @@ import(
 	"net/http"
 	"html/template"
 	"log"
-	"github.com/jorbort/42-matcha/internals/models"
+	"github.com/jorbort/42-matcha/backend/internals/models"
 	"encoding/json"
 )
 
