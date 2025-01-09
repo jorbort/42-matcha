@@ -2,9 +2,10 @@ package main
 
 import (
 	"net/http"
+	"github.com/justinas/alice"
 )
 
-func (app *aplication) routes() *http.ServeMux{
+func (app *aplication) routes() http.Handler{
 	serv := http.NewServeMux()
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
@@ -15,5 +16,7 @@ func (app *aplication) routes() *http.ServeMux{
 
 	serv.HandleFunc("POST /create_user", app.CreateUser)
 
-	return serv
+	standardMiddleware := alice.New(logRequest, commonHeaders)
+
+	return standardMiddleware.Then(serv)
 }

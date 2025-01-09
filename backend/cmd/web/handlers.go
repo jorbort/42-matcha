@@ -9,7 +9,6 @@ import(
 )
 
 func (app *aplication)home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/html")
 
 	ts, err := template.ParseFiles("ui/html/index.html")
 	if err != nil {
