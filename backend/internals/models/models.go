@@ -63,11 +63,24 @@ func (m *Models) InsertUser(ctx context.Context, u *User) error {
 }
 
 func (m *Models) HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 9)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 8)
 	return string(bytes), err
 }
 
 func (m *Models) VerifyPassword(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func (m *Models) userValidation(ctx context.Context, code string) (map[int]bool ,error) {
+	var userInfo map[int]bool
+	var id int
+	var completed bool
+	stmt := `UPDATE users SET validated = true WHERE validation_code = $1 RETURNING id , completed`
+	err := m.DB.QueryRow(ctx, stmt, code).Scan(&id, &completed)
+	if err != nil {
+		return nil, err
+	}
+	userInfo[id] = completed
+	return userInfo ,nil
 }

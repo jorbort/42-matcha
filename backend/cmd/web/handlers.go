@@ -88,3 +88,53 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 	
 	w.WriteHeader(http.StatusCreated)
 }
+
+func (app *aplication) ValidateUser(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query.Get("code")
+	userInfo , err := app.models.userValidation(r.Context(), code)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	for k , v := range userInfo {
+		profileURI := fmt.Sprintf("/complete-profile$id=%d", k)
+		if v == false {
+			http.Redirect(w, r, profileURI, http.StatusSeeOther)
+		}
+		else {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+		}
+		break;
+	}
+}
+
+func (app *aplication) Login(w http.ResponseWriter, r *http.Request){
+	ts , err := template.ParseFiles("ui/html/login.html")
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	err = ts.Execute(w, nil)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (app *aplication) completeProfile(w http.ResponseWriter, r *http.Request){
+	userID := r.URL.Query.Get("id")
+	ts , err := template.ParseFiles("ui/html/complete_profile.html")
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	err = ts.Execute(w, userID)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+}

@@ -16,10 +16,10 @@ type EmailSender struct {
 }
 
 func (sender *EmailSender)sendValidationEmail() error {
-	htmlContent := fmt.Sprintf(`<a href="%s">Click here to validate your account</a>`, sender.validationURI) 
+	htmlContent := fmt.Sprintf(`<a href="http://localhost:3000/validate$code=%s">Click here to validate your account</a>`, sender.validationURI) 
 	
 	e := email.NewEmail()
-	e.From = "Jordan Wright <42pong1992@gmail.com>"
+	e.From = "Matcha!! <42pong1992@gmail.com>"
 	e.To = []string{sender.destiantion}
 	e.Bcc = []string{"42pong1992@gmail.com"}
 	e.Cc = []string{"42pong1992@gmail.com"}
@@ -30,7 +30,7 @@ func (sender *EmailSender)sendValidationEmail() error {
 }
 
 func (sender *EmailSender)generateValidationURI() string {
-	b := make([]byte, 16)
+	b := make([]byte, 8)
 	rand.Read(b)
 	sender.validationURI = hex.EncodeToString(b)
 	return sender.validationURI
