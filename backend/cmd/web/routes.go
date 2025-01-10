@@ -12,10 +12,10 @@ func (app *aplication) routes() http.Handler{
 
 	serv.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-	serv.HandleFunc("GET /validate$code={$}", app.ValidateUser)
+	serv.HandleFunc("GET /validate", app.ValidateUser)
 	
 	serv.HandleFunc("GET /login", app.Login)
-	serv.HandleFunc("GET /complete-profile$id={$}", app.completeProfile)
+	serv.HandleFunc("GET /complete-profile", app.completeProfile)
 
 	serv.HandleFunc("GET /{$}", app.home)
 

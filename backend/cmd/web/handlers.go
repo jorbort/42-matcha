@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"io"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jorbort/42-matcha/backend/internals/models"
@@ -90,21 +91,20 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *aplication) ValidateUser(w http.ResponseWriter, r *http.Request) {
-	code := r.URL.Query.Get("code")
-	userInfo , err := app.models.userValidation(r.Context(), code)
+	code := r.URL.Query().Get("code")
+	userInfo , err := app.models.UserValidation(r.Context(), code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	for k , v := range userInfo {
-		profileURI := fmt.Sprintf("/complete-profile$id=%d", k)
+		profileURI := fmt.Sprintf("/complete-profile?id=%d", k)
 		if v == false {
 			http.Redirect(w, r, profileURI, http.StatusSeeOther)
-		}
-		else {
+		} else {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 		}
-		break;
+		break
 	}
 }
 
@@ -124,14 +124,19 @@ func (app *aplication) Login(w http.ResponseWriter, r *http.Request){
 }
 
 func (app *aplication) completeProfile(w http.ResponseWriter, r *http.Request){
-	userID := r.URL.Query.Get("id")
+	userID := r.URL.Query().Get("id")
+	data := struct {
+		UserID string
+	}{
+		UserID: userID,
+	}
 	ts , err := template.ParseFiles("ui/html/complete_profile.html")
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	err = ts.Execute(w, userID)
+	err = ts.Execute(w, data)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)

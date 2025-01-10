@@ -16,7 +16,7 @@ type EmailSender struct {
 }
 
 func (sender *EmailSender)sendValidationEmail() error {
-	htmlContent := fmt.Sprintf(`<a href="http://localhost:3000/validate$code=%s">Click here to validate your account</a>`, sender.validationURI) 
+	htmlContent := fmt.Sprintf(`<a href="http://localhost:3000/validate?code=%s">Click here to validate your account</a>`, sender.validationURI) 
 	
 	e := email.NewEmail()
 	e.From = "Matcha!! <42pong1992@gmail.com>"
