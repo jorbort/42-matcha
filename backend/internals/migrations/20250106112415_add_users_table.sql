@@ -27,9 +27,9 @@ CREATE table users (
 	validated boolean not null default false,
 	completed boolean not null default false,
 	password bytea not null,
-	fame_index float not null
+	fame_index float not null,
+	validation_code bytea not null
 );
-3
 
 -- +goose Down
 -- +goose StatementBegin
