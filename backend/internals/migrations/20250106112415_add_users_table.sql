@@ -3,7 +3,7 @@
 SELECT 'up SQL query';
 -- +goose StatementEnd
 CREATE table profile_info(
-	id serial PRIMARY KEY,
+	id bigserial PRIMARY KEY,
 	gender varchar(50) ,
 	sexual_orientation varchar(50) ,
 	age int ,
@@ -18,18 +18,18 @@ CREATE table profile_info(
 );
 
 CREATE table users (
-	id serial PRIMARY KEY,
-	username varchar(255) not null,
+	id bigserial PRIMARY KEY,
+	username  varchar(255) UNIQUE not null,
 	first_name varchar(255) not null,
 	last_name varchar(255) not null,
 	profile_info int UNIQUE REFERENCES profile_info(id),
-	email varchar(255) not null,
+	email varchar(255) UNIQUE not null,
 	validated boolean not null default false,
 	completed boolean not null default false,
-	password varchar(255) not null,
+	password bytea not null,
 	fame_index float not null
 );
-
+3
 
 -- +goose Down
 -- +goose StatementBegin

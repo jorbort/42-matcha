@@ -1,14 +1,15 @@
 package main
 
-import(
-	"net/http"
+import (
+	"encoding/json"
 	"html/template"
 	"log"
+	"net/http"
+
 	"github.com/jorbort/42-matcha/backend/internals/models"
-	"encoding/json"
 )
 
-func (app *aplication)home(w http.ResponseWriter, r *http.Request) {
+func (app *aplication) home(w http.ResponseWriter, r *http.Request) {
 
 	ts, err := template.ParseFiles("ui/html/index.html")
 	if err != nil {
@@ -25,9 +26,12 @@ func (app *aplication)home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (app *aplication)CreateUser(w http.ResponseWriter, r *http.Request) {
+func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
-	err := json.NewDecoder(r.Body).Decode(&user)
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	err := decoder.Decode(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
