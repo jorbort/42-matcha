@@ -1,35 +1,26 @@
 package main
 
 import (
-	"html/template"
-	"log"
 	"net/http"
 	"regexp"
 	"io"
 	"errors"
 	"fmt"
+	"time"
+	"os"
+	//"log"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jorbort/42-matcha/backend/internals/models"
 	"github.com/grahms/godantic"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-func (app *aplication) home(w http.ResponseWriter, r *http.Request) {
-
-	ts, err := template.ParseFiles("ui/html/index.html")
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	err = ts.Execute(w, nil)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+type loginData struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
+
 
 func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
@@ -50,7 +41,7 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	passRegexp := regexp.MustCompile(`^[a-zA-Z0-9_#$]{4,25}$`)
-	if !passRegexp.MatchString(user.Password){
+	if !passRegexp.MatchString(string(user.Password)){
 		http.Error(w, "password must be 4-25 characters long, and alphanumeric values", http.StatusBadRequest)
 		return
 	}
@@ -108,38 +99,61 @@ func (app *aplication) ValidateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (app *aplication) Login(w http.ResponseWriter, r *http.Request){
-	ts , err := template.ParseFiles("ui/html/login.html")
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	err = ts.Execute(w, nil)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-}
+func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request){
+	var loginData loginData
+	var user *models.User
 
-func (app *aplication) completeProfile(w http.ResponseWriter, r *http.Request){
-	userID := r.URL.Query().Get("id")
-	data := struct {
-		UserID string
-	}{
-		UserID: userID,
-	}
-	ts , err := template.ParseFiles("ui/html/complete_profile.html")
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = ts.Execute(w, data)
+	defer r.Body.Close()
+
+	validator := godantic.Validate{}
+	err = validator.BindJSON(body, &loginData)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	user, err = app.models.GetUserByUsername(r.Context(), loginData.Username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if !user.Validated {
+		http.Error(w, "user not validated", http.StatusBadRequest)
+		return
+	}
+	if !app.models.VerifyPassword(loginData.Password, user.Password) {
+		http.Error(w, "invalid password", http.StatusBadRequest)
+		return
+	}
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": user.Username,
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	})
+	tokenstring, err := token.SignedString([]byte(os.Getenv("SECRET_KEY")))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": user.Username,
+		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
+	})
+	refreshString, err := token.SignedString([]byte(os.Getenv("SECRET_KEY")))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name: "access-token",
+		Value: tokenstring,
+	})
+	http.SetCookie(w, &http.Cookie{
+		Name: "refresh-token",
+		Value: refreshString,
+	})
+	w.WriteHeader(http.StatusOK)
 }

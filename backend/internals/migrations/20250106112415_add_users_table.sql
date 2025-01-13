@@ -22,7 +22,7 @@ CREATE table users (
 	username  varchar(255) UNIQUE not null,
 	first_name varchar(255) not null,
 	last_name varchar(255) not null,
-	profile_info int UNIQUE REFERENCES profile_info(id),
+	profile_info int UNIQUE REFERENCES profile_info(id) on delete cascade,
 	email varchar(255) UNIQUE not null,
 	validated boolean not null default false,
 	completed boolean not null default false,

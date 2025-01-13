@@ -3,6 +3,7 @@ module github.com/jorbort/42-matcha/backend
 go 1.23.4
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/grahms/godantic v1.2.0
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible

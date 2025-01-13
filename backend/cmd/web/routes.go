@@ -14,7 +14,8 @@ func (app *aplication) routes() http.Handler{
 
 	serv.HandleFunc("GET /validate", app.ValidateUser)
 	
-	serv.HandleFunc("GET /login", app.Login)
+	serv.HandleFunc("GET /login", app.LoginPage)
+	serv.HandleFunc("POST /login", app.UserLogin)
 	serv.HandleFunc("GET /complete-profile", app.completeProfile)
 
 	serv.HandleFunc("GET /{$}", app.home)

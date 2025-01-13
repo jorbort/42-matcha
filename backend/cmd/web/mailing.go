@@ -29,9 +29,9 @@ func (sender *EmailSender)sendValidationEmail() error {
 	return	e.Send("smtp.gmail.com:587", smtp.PlainAuth("", "42pong1992@gmail.com", os.Getenv("EMAIL_APP_PASSWORD"), "smtp.gmail.com"))
 }
 
-func (sender *EmailSender)generateValidationURI() string {
+func (sender *EmailSender)generateValidationURI() []byte {
 	b := make([]byte, 8)
 	rand.Read(b)
 	sender.validationURI = hex.EncodeToString(b)
-	return sender.validationURI
+	return []byte(sender.validationURI)
 }

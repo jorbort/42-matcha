@@ -3,8 +3,10 @@ package models
 import (
 	"context"
 	"log"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -17,9 +19,9 @@ type User struct {
 	Email       string  `json:"email" binding:"required" format:"email"`
 	Validated   bool    `json:"validated" binding:"ignore"`
 	Completed   bool    `json:"completed" binding:"ignore"`
-	Password    string  `json:"password" binding:"required"`
+	Password    [] byte  `json:"password" binding:"required"`
 	Fame_index  float64 `json:"fame_index" binding:"ignore"`
-	ValidationCode string `json:"validation_code" binding:"ignore"`
+	ValidationCode []byte `json:"validation_code" binding:"ignore"`
 }
 
 type Models struct {
@@ -62,20 +64,20 @@ func (m *Models) InsertUser(ctx context.Context, u *User) error {
 	return tx.Commit(ctx)
 }
 
-func (m *Models) HashPassword(password string) (string, error) {
+func (m *Models) HashPassword(password []byte) ([]byte, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 8)
-	return string(bytes), err
+	return bytes, err
 }
 
-func (m *Models) VerifyPassword(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+func (m *Models) VerifyPassword(password string, hash []byte) bool {
+	err := bcrypt.CompareHashAndPassword(hash, []byte(password))
 	return err == nil
 }
 
 func (m *Models) UserValidation(ctx context.Context, code string) (map[int]bool ,error) {
 	tx, err := m.DB.Begin(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}	
 	defer tx.Rollback(ctx)
 	
@@ -83,7 +85,7 @@ func (m *Models) UserValidation(ctx context.Context, code string) (map[int]bool 
 	var id int
 	var completed bool
 	stmt := `UPDATE users SET validated = true WHERE validation_code = $1 RETURNING id , completed`
-	err := tx.QueryRow(ctx, stmt, code).Scan(&id, &completed)
+	err = tx.QueryRow(ctx, stmt, code).Scan(&id, &completed)
 	if err != nil {
 		return nil, err
 	}
@@ -93,4 +95,20 @@ func (m *Models) UserValidation(ctx context.Context, code string) (map[int]bool 
 	}
 	userInfo[id] = completed
 	return userInfo ,nil
+}
+
+func (m *Models) GetUserByUsername(ctx context.Context, username string) (*User, error) {
+	
+	stmt := `SELECT id, username, first_name, last_name, profile_info, email, validated, completed, password, fame_index, validation_code FROM users WHERE username = $1`
+	row := m.DB.QueryRow(ctx, stmt, username)
+
+	u := &User{}
+	err := row.Scan(&u.ID, &u.Username, &u.FirstName, &u.LastName, &u.ProfileInfo, &u.Email, &u.Validated, &u.Completed, &u.Password, &u.Fame_index, &u.ValidationCode)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+            return nil, fmt.Errorf("user not found: %s", username)
+        }
+        return nil, err
+	}
+	return u, nil
 }
