@@ -11,7 +11,7 @@ import (
 )
 
 type User struct {
-	ID          int     `json:"id" binding:"ignore"`
+	ID          int     `json:"id" binding:"required"`
 	Username    string  `json:"username" binding:"required"`
 	FirstName   string  `json:"first_name" binding:"required"`
 	LastName    string  `json:"last_name" binding:"required"`
@@ -22,6 +22,21 @@ type User struct {
 	Password    [] byte  `json:"password" binding:"required"`
 	Fame_index  float64 `json:"fame_index" binding:"ignore"`
 	ValidationCode []byte `json:"validation_code" binding:"ignore"`
+}
+
+type ProfileInfo struct {
+	ID				int     `json:"id" binding:"ignore"`
+	gender			string  `json:"gender binding:"required"`
+	sexual_preference string `json:"sexual_preference" binding:"required" enum: "men,women,both"`
+	bio 			string  `json:"bio" binding:"required" max: 500`
+	interests		[]string  `json:"interests" binding:"required" max: 500`
+	profile_picture_one string `json:"profile_picture_one" binding:"ignore"`
+	profile_picture_two string `json:"profile_picture_two" binding:"ignore"`
+	profile_picture_three string `json:"profile_picture_three" binding:"ignore"`
+	profile_picture_four string `json:"profile_picture_four" binding:"ignore"`
+	profile_picture_five string `json:"profile_picture_five" binding:"ignore"`
+	age 			int 	`json:"age" binding:"required"`
+	location		float64  `json:"location" binding:"ignore"`
 }
 
 type Models struct {
@@ -111,4 +126,37 @@ func (m *Models) GetUserByUsername(ctx context.Context, username string) (*User,
         return nil, err
 	}
 	return u, nil
+}
+
+func (m *Models) InsertProfileInfo(ctx context.Context, p *ProfileInfo) error{
+	tx, err := m.DB.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}	
+	defer tx.Rollback(ctx)
+
+	stmt := `UPDATE profile_info SET gender = $1, sexual_orientation = $2, bio = $3, interests = $4, age = $5 WHERE id = $6`
+	_ , err := tx.Exec(ctx, stmt, p.gender , p.sexual_preference, p.bio, p.interests, p.age, p.ID)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Models) UpdateUserCompleted(ctx context.Context, id int) error{
+	stmt := `UPDATE users SET completed = true WHERE id = $1`
+	tx , err := m.DB.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	_ , err = tx.Exec(ctx, stmt, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

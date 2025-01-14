@@ -48,7 +48,7 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if len(user.Username) < 3 || len(user.Username) > 20 {
 		http.Error(w, "username must be 3-20 characters long", http.StatusBadRequest)
 		return
-	} 
+	}
 	user.Validated = false
 	user.Completed = false
 	
@@ -77,7 +77,6 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
 	w.WriteHeader(http.StatusCreated)
 }
 
@@ -160,4 +159,32 @@ func (app *aplication) generateJWT(username string, exp time.Time) (string, erro
 		return "", err
 	}
 	return tokenstring, nil
+}
+
+func (app *aplication) completeUserProfile(w http.ResponseWriter, r *http.Request){
+	body , err := io.ReadAll(r.body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+	var profile models.ProfileInfo
+
+	validator := godantic.Validate{}
+	err = validator.BindJSON(body, &profile)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = app.models.InsertProfileInfo(r.Context(), &profile)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = app.models.UpdateUserCompleted(r.Context(), profile.UserID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
 }
