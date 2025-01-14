@@ -129,20 +129,12 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "invalid password", http.StatusBadRequest)
 		return
 	}
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": user.Username,
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
-	})
-	tokenstring, err := token.SignedString([]byte(os.Getenv("SECRET_KEY")))
+	tokenstring , err := app.generateJWT(user.Username, time.Now().Add(time.Hour * 24))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": user.Username,
-		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
-	})
-	refreshString, err := token.SignedString([]byte(os.Getenv("SECRET_KEY")))
+	refreshToken , err := app.generateJWT(user.Username, time.Now().Add(time.Hour * 24 * 7))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -153,7 +145,19 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request){
 	})
 	http.SetCookie(w, &http.Cookie{
 		Name: "refresh-token",
-		Value: refreshString,
+		Value: refreshToken,
 	})
 	w.WriteHeader(http.StatusOK)
+}
+
+func (app *aplication) generateJWT(username string, exp time.Time) (string, error){
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": username,
+		"exp": exp.Unix(),
+	})
+	tokenstring, err := accessToken.SignedString([]byte(os.Getenv("SECRET_KEY")))
+	if err != nil {
+		return "", err
+	}
+	return tokenstring, nil
 }

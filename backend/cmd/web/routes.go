@@ -8,19 +8,23 @@ import (
 func (app *aplication) routes() http.Handler{
 	serv := http.NewServeMux()
 
+	dynamicMiddleware := alice.New(authHandler)
+
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 
 	serv.Handle("GET /static/", http.StripPrefix("/static", fileServer))
-
-	serv.HandleFunc("GET /validate", app.ValidateUser)
-	
+	//frontend routes that serve html
 	serv.HandleFunc("GET /login", app.LoginPage)
-	serv.HandleFunc("POST /login", app.UserLogin)
-	serv.HandleFunc("GET /complete-profile", app.completeProfile)
-
+	serv.HandleFunc("GET /complete-profile",app.completeProfile)
 	serv.HandleFunc("GET /{$}", app.home)
+	serv.Handle("GET /testPage", dynamicMiddleware.ThenFunc(app.home))
 
+	// api routes
+	serv.HandleFunc("GET /validate", app.ValidateUser)
+	serv.HandleFunc("POST /login", app.UserLogin)
 	serv.HandleFunc("POST /create_user", app.CreateUser)
+
+
 
 	standardMiddleware := alice.New(logRequest, commonHeaders)
 
