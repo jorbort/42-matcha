@@ -26,9 +26,15 @@ CREATE table users (
 	email varchar(255) UNIQUE not null,
 	validated boolean not null default false,
 	completed boolean not null default false,
-	password varchar(50) not null,
+	password varchar(255) not null,
 	fame_index float not null,
 	validation_code bytea not null
+);
+
+CREATE table user_images(
+    id bigserial PRIMARY KEY,
+    profile_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    image_url varchar(255) NOT NULL
 );
 
 -- +goose Down

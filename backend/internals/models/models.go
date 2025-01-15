@@ -27,7 +27,7 @@ type User struct {
 }
 
 type ProfileInfo struct {
-	ID                    int      `json:"id" binding:"ignore"`
+	ID                    int      `json:"id" `
 	Gender                string   `json:"gender" binding:"required"`
 	Sexual_preference     string   `json:"Sexual_preference" binding:"required" enum:"men,women,both"`
 	Bio                   string   `json:"Bio" binding:"required" max:"500"`
@@ -143,7 +143,7 @@ func (m *Models) InsertProfileInfo(ctx context.Context, p *ProfileInfo) error {
 	point := geoctx.NewPoint(coord)
 
 	wkb := point.ToWKB()
-	stmt := `UPDATE profile_info SET gender = $1, sexual_orientation = $2, bio = $3, interests = $4, age = $5 , location = ST_SetSRID($6::geometry, 4326) WHERE id = $7`
+	stmt := `UPDATE profile_info SET gender = $1, sexual_orientation = $2, bio = $3, interests = $4, age = $5 , location = ST_SetSRID(ST_GeomFromWKB($6), 4326) WHERE id = $7`
 	_, err = tx.Exec(ctx, stmt, p.Gender, p.Sexual_preference, p.Bio, p.Interests, p.Age, wkb, p.ID)
 	if err != nil {
 		return err
