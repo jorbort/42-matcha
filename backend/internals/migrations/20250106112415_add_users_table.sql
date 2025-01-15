@@ -26,7 +26,7 @@ CREATE table users (
 	email varchar(255) UNIQUE not null,
 	validated boolean not null default false,
 	completed boolean not null default false,
-	password bytea not null,
+	password varchar(50) not null,
 	fame_index float not null,
 	validation_code bytea not null
 );

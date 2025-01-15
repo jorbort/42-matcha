@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+
 	"github.com/justinas/alice"
 )
 
@@ -23,6 +24,7 @@ func (app *aplication) routes() http.Handler{
 	serv.HandleFunc("GET /validate", app.ValidateUser)
 	serv.HandleFunc("POST /login", app.UserLogin)
 	serv.HandleFunc("POST /create_user", app.CreateUser)
+	serv.Handle("POST /complete_profile", dynamicMiddleware.ThenFunc(app.completeUserProfile))
 
 
 
