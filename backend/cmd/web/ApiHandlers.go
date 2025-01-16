@@ -6,10 +6,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
+	"strconv"
 	"time"
-
-	//"log"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/grahms/godantic"
@@ -182,6 +182,58 @@ func (app *aplication) completeUserProfile(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	err = app.models.UpdateUserCompleted(r.Context(), profile.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
+
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	err := r.ParseMultipartForm(1048576)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	userIDStr := r.FormValue("user_id")
+	pictureNumberStr := r.FormValue("picture_number")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+	pictureNumber, err := strconv.Atoi(pictureNumberStr)
+	if err != nil || pictureNumber < 1 || pictureNumber > 5 {
+		http.Error(w, "Invalid picture number", http.StatusBadRequest)
+		return
+	}
+	file, header, err := r.FormFile("image")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	valid, err := app.models.ValidateImage(file)
+	if !valid || err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	extension := filepath.Ext(header.Filename)
+	fileName, err := app.models.GenerateFileName(extension)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fileURI, err := app.models.SaveFile(file, fileName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = app.models.InsertImage(r.Context(), userID, pictureNumber, fileURI)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

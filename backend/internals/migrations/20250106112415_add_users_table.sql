@@ -10,11 +10,6 @@ CREATE table profile_info(
 	bio varchar(255) ,
 	interests text[],
 	location geometry(Point, 4326),
-	profile_picture_one varchar(255) ,
-	profile_picture_two varchar(255),
-	profile_picture_three varchar(255),
-	profile_picture_four varchar(255),
-	profile_picture_five varchar(255)
 );
 
 CREATE table users (
@@ -32,9 +27,11 @@ CREATE table users (
 );
 
 CREATE table user_images(
-    id bigserial PRIMARY KEY,
-    profile_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    image_url varchar(255) NOT NULL
+    id BIGSERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    image_number INT NOT NULL CHECK (image_number BETWEEN 1 AND 5),
+    image_url varchar(255) NOT NULL,
+    UNIQUE(profile_id, image_number)
 );
 
 -- +goose Down

@@ -12,36 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct {
-	ID             int     `json:"id" binding:"ignore"`
-	Username       string  `json:"username" binding:"required"`
-	FirstName      string  `json:"first_name" binding:"required"`
-	LastName       string  `json:"last_name" binding:"required"`
-	ProfileInfo    int     `json:"profile_info" binding:"ignore"`
-	Email          string  `json:"email" binding:"required" format:"email"`
-	Validated      bool    `json:"validated" binding:"ignore"`
-	Completed      bool    `json:"completed" binding:"ignore"`
-	Password       string  `json:"password" binding:"required"`
-	Fame_index     float64 `json:"fame_index" binding:"ignore"`
-	ValidationCode []byte  `json:"validation_code" binding:"ignore"`
-}
-
-type ProfileInfo struct {
-	ID                    int      `json:"id" `
-	Gender                string   `json:"gender" binding:"required"`
-	Sexual_preference     string   `json:"Sexual_preference" binding:"required" enum:"men,women,both"`
-	Bio                   string   `json:"Bio" binding:"required" max:"500"`
-	Interests             []string `json:"Interests" binding:"required" max:"500"`
-	Profile_picture_one   string   `json:"profile_picture_one" binding:"ignore"`
-	Profile_picture_two   string   `json:"profile_picture_two" binding:"ignore"`
-	Profile_picture_three string   `json:"profile_picture_three" binding:"ignore"`
-	Profile_picture_four  string   `json:"profile_picture_four" binding:"ignore"`
-	Profile_picture_five  string   `json:"profile_picture_five" binding:"ignore"`
-	Age                   int      `json:"age" binding:"required"`
-	Latitude              float64  `json:"Latitude" binding:"required" binding:"latitude"`
-	Longitude             float64  `json:"Longitude" binding:"required" binding:"longitude"`
-}
-
 type Models struct {
 	DB *pgxpool.Pool
 }
@@ -78,7 +48,19 @@ func (m *Models) InsertUser(ctx context.Context, u *User) error {
 		log.Println(err.Error())
 		return err
 	}
-
+	stmt = `
+		INSERT  INTO user_images (user_id, image_number, image_url) VALUES
+		($1, 1, ''),
+		($1, 2, ''),
+		($1, 3, ''),
+		($1, 4, ''),
+		($1, 5, '')
+		`
+	_, err = tx.Exec(ctx, stmt, profile_info_id)
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
 	return tx.Commit(ctx)
 }
 
