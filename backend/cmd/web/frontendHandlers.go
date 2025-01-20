@@ -23,7 +23,7 @@ func (app *aplication) home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func testPage(w http.ResponseWriter, r *http.Request){
+func testPage(w http.ResponseWriter, r *http.Request) {
 	ts, err := template.ParseFiles("ui/html/test.html")
 	if err != nil {
 		log.Println(err.Error())
@@ -39,8 +39,8 @@ func testPage(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (app *aplication) LoginPage(w http.ResponseWriter, r *http.Request){
-	ts , err := template.ParseFiles("ui/html/login.html")
+func (app *aplication) LoginPage(w http.ResponseWriter, r *http.Request) {
+	ts, err := template.ParseFiles("ui/html/login.html")
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -54,14 +54,14 @@ func (app *aplication) LoginPage(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (app *aplication) completeProfile(w http.ResponseWriter, r *http.Request){
+func (app *aplication) completeProfile(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("id")
 	data := struct {
 		UserID string
 	}{
 		UserID: userID,
 	}
-	ts , err := template.ParseFiles("ui/html/complete_profile.html")
+	ts, err := template.ParseFiles("ui/html/complete_profile.html")
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -73,4 +73,18 @@ func (app *aplication) completeProfile(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func (app *aplication) imageUploader(w http.ResponseWriter, r *http.Request) {
+	ts, err := template.ParseFiles("ui/html/image_uploader.html")
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	err = ts.Execute(w, nil)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
 }

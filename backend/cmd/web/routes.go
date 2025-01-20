@@ -19,6 +19,7 @@ func (app *aplication) routes() http.Handler {
 	serv.HandleFunc("GET /complete-profile", app.completeProfile)
 	serv.HandleFunc("GET /{$}", app.home)
 	serv.Handle("GET /testPage", dynamicMiddleware.ThenFunc(app.home))
+	serv.HandleFunc("GET /imageUpload", app.imageUploader)
 
 	// api routes
 	serv.Handle("POST /uploadImg", dynamicMiddleware.ThenFunc(app.ImageEndpoint))

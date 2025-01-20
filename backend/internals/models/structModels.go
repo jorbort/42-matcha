@@ -21,8 +21,8 @@ type ProfileInfo struct {
 	Bio               string   `json:"Bio" binding:"required" max:"500"`
 	Interests         []string `json:"Interests" binding:"required" max:"500"`
 	Age               int      `json:"age" binding:"required"`
-	Latitude          float64  `json:"Latitude" binding:"required" format:"latitude"`
-	Longitude         float64  `json:"Longitude" binding:"required" format:"longitude"`
+	Latitude          float64  `json:"Latitude" binding:"required" `
+	Longitude         float64  `json:"Longitude" binding:"required" `
 }
 
 type Image struct {

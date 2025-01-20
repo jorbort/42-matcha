@@ -24,7 +24,7 @@ func (m *Models) InsertUser(ctx context.Context, u *User) error {
 	defer tx.Rollback(ctx)
 
 	var profile_info_id int
-	stmt := "INSERT INTO profile_info (gender , sexual_orientation, bio, interests, location,  profile_picture_one, profile_picture_two, profile_picture_three, profile_picture_four, profile_picture_five) VALUES (NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) RETURNING id"
+	stmt := "INSERT INTO profile_info (gender , sexual_orientation, bio, interests, location) VALUES (NULL, NULL, NULL, NULL, NULL) RETURNING id"
 	err = tx.QueryRow(ctx, stmt).Scan(&profile_info_id)
 	if err != nil {
 		return err

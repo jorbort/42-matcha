@@ -176,6 +176,14 @@ func (app *aplication) completeUserProfile(w http.ResponseWriter, r *http.Reques
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if profile.Latitude < -90 || profile.Latitude > 90 {
+		http.Error(w, "invalid latitude", http.StatusBadRequest)
+		return
+	}
+	if profile.Longitude < -180 || profile.Longitude > 180 {
+		http.Error(w, "invalid longitude", http.StatusBadRequest)
+		return
+	}
 	err = app.models.InsertProfileInfo(r.Context(), &profile)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

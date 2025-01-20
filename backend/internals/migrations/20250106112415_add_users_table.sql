@@ -9,7 +9,7 @@ CREATE table profile_info(
 	age int ,
 	bio varchar(255) ,
 	interests text[],
-	location geometry(Point, 4326),
+	location geometry(Point, 4326)
 );
 
 CREATE table users (
@@ -31,7 +31,7 @@ CREATE table user_images(
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     image_number INT NOT NULL CHECK (image_number BETWEEN 1 AND 5),
     image_url varchar(255) NOT NULL,
-    UNIQUE(profile_id, image_number)
+    UNIQUE(user_id, image_number)
 );
 
 -- +goose Down

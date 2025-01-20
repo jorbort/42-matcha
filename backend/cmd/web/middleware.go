@@ -1,17 +1,18 @@
 package main
 
 import (
-	"net/http"
 	"log"
-	"strings"
-	"github.com/golang-jwt/jwt/v5"
+	"net/http"
 	"os"
+	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func commonHeaders(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Security-Policy",
-			"default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com")
+			"default-src 'self' ; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com")
 		w.Header().Set("Referrer-Policy", "origin-when-cross-origin")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "deny")
@@ -22,21 +23,21 @@ func commonHeaders(next http.Handler) http.Handler {
 	})
 }
 
-func logRequest(next http.Handler) http.Handler{
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+func logRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			remoteAddr = r.RemoteAddr
-			proto = r.Proto
-			method = r.Method
-			url = r.URL.RequestURI()
+			proto      = r.Proto
+			method     = r.Method
+			url        = r.URL.RequestURI()
 		)
 		log.Printf("received request from %s %s %s %s", remoteAddr, proto, method, url)
 		next.ServeHTTP(w, r)
 	})
 }
 
-func authHandler(next http.Handler) http.Handler{
-	return http.HandlerFunc(func(w http.ResponseWriter, r * http.Request){
+func authHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		bearer := r.Header.Get("Authorization")
 		if bearer == "" {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -48,7 +49,7 @@ func authHandler(next http.Handler) http.Handler{
 			return
 		}
 		accesToken := tokenString[1]
-		str , err := jwt.Parse(accesToken, func(token *jwt.Token) (interface{}, error){
+		str, err := jwt.Parse(accesToken, func(token *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv("SECRET_KEY")), nil
 		})
 		if err != nil {
