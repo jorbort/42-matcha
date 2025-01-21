@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -38,22 +37,18 @@ func logRequest(next http.Handler) http.Handler {
 
 func authHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		bearer := r.Header.Get("Authorization")
-		if bearer == "" {
+		cookie, err := r.Cookie("access-token")
+		if err != nil {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		tokenString := strings.Split(bearer, " ")
-		if len(tokenString) != 2 || tokenString[0] != "Bearer" {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
-		accesToken := tokenString[1]
+		accesToken := cookie.Value
 		str, err := jwt.Parse(accesToken, func(token *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv("SECRET_KEY")), nil
 		})
 		if err != nil {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			log.Println(err.Error())
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 		if !str.Valid {

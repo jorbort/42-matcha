@@ -23,7 +23,7 @@ document
     formData.append("image", document.getElementById("image").files[0]);
 
     const jwtToken = getCookie("access-token");
-
+    console.log(jwtToken);
     fetch("http://localhost:3000/uploadImg", {
       method: "POST",
       headers: {
@@ -33,13 +33,9 @@ document
     })
       .then((response) => response.json())
       .then((data) => {
-        document.getElementById("response").innerText = JSON.stringify(
-          data,
-          null,
-          2,
-        );
+        console.log(data);
       })
       .catch((error) => {
-        document.getElementById("response").innerText = "Error: " + error;
+        console.error(error);
       });
   });

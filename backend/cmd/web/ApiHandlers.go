@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,6 +22,14 @@ import (
 type loginData struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
+}
+type loginResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+type uploadResponse struct {
+	Message string `json:"message"`
+	URL     string `json:"url"`
 }
 
 func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -104,6 +114,8 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.Println("error leyendo el body")
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -112,11 +124,15 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 	validator := godantic.Validate{}
 	err = validator.BindJSON(body, &loginData)
 	if err != nil {
+		log.Println(err.Error())
+		log.Println("error dentro del validator de godantic")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	user, err = app.models.GetUserByUsername(r.Context(), loginData.Username)
 	if err != nil {
+		log.Println("error en la query para obtener al usuario")
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -130,6 +146,7 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	tokenstring, err := app.generateJWT(user.Username, time.Now().Add(time.Hour*24))
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -146,7 +163,12 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 		Name:  "refresh-token",
 		Value: refreshToken,
 	})
-	w.WriteHeader(http.StatusOK)
+	response := loginResponse{
+		AccessToken:  tokenstring,
+		RefreshToken: refreshToken,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func (app *aplication) generateJWT(username string, exp time.Time) (string, error) {
@@ -202,6 +224,7 @@ func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 	err := r.ParseMultipartForm(1048576)
 	if err != nil {
+		log.Println("error parseando multipart-form", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -219,6 +242,7 @@ func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 	file, header, err := r.FormFile("image")
 	if err != nil {
+		log.Println("error retieving the file", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -226,25 +250,34 @@ func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	valid, err := app.models.ValidateImage(file)
 	if !valid || err != nil {
+		log.Println("invalid image", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	extension := filepath.Ext(header.Filename)
 	fileName, err := app.models.GenerateFileName(extension)
 	if err != nil {
+		log.Println("error generando el file name", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	fileURI, err := app.models.SaveFile(file, fileName)
 	if err != nil {
+		log.Println("error saving file", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	err = app.models.InsertImage(r.Context(), userID, pictureNumber, fileURI)
 	if err != nil {
+		log.Println("error inserting image to db", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
+	response := uploadResponse{
+		Message: "Image uploaded successfully",
+		URL:     fileURI,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

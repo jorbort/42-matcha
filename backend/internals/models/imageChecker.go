@@ -22,18 +22,26 @@ func (m *Models) GenerateFileName(ext string) (string, error) {
 }
 
 func (m *Models) SaveFile(file multipart.File, fileName string) (string, error) {
-	path := filepath.Join("images", fileName)
+	path := filepath.Join("ui/static/images", fileName)
 	out, err := os.Create(path)
 	if err != nil {
 		return "", err
 	}
 	defer out.Close()
+	_, err = file.Seek(0, io.SeekStart)
+	if err != nil {
+		return "", err
+	}
 	_, err = io.Copy(out, file)
 	return path, err
 }
 
 func (m *Models) ValidateImage(file multipart.File) (bool, error) {
 	_, _, err := image.Decode(file)
+	if err != nil {
+		return false, err
+	}
+	_, err = file.Seek(0, io.SeekStart)
 	if err != nil {
 		return false, err
 	}
