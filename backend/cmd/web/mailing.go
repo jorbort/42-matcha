@@ -15,16 +15,16 @@ type EmailSender struct {
 	validationURI string
 }
 
-func (sender *EmailSender)sendValidationEmail() error {
-	htmlContent := fmt.Sprintf(`<a href="http://localhost:3000/validate?code=%s">Click here to validate your account</a>`, sender.validationURI) 
-	
+func (sender *EmailSender)sendValidationEmail(subject , text string) error {
+	htmlContent := fmt.Sprintf(`<a href="http://localhost:3000/validate?code=%s">Click here to validate your account</a>`, sender.validationURI)
+
 	e := email.NewEmail()
 	e.From = "Matcha!! <42pong1992@gmail.com>"
 	e.To = []string{sender.destiantion}
 	e.Bcc = []string{"42pong1992@gmail.com"}
 	e.Cc = []string{"42pong1992@gmail.com"}
-	e.Subject = "Validate your account on Matcha!!"
-	e.Text = []byte("Click on the link below to validate your account")
+	e.Subject = subject
+	e.Text = []byte(text)
 	e.HTML = []byte(htmlContent)
 	return	e.Send("smtp.gmail.com:587", smtp.PlainAuth("", "42pong1992@gmail.com", os.Getenv("EMAIL_APP_PASSWORD"), "smtp.gmail.com"))
 }

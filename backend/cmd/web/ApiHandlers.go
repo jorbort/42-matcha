@@ -82,7 +82,7 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = sender.sendValidationEmail()
+	err = sender.sendValidationEmail("Validate your account", "Click the link below to validate your account!!")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
