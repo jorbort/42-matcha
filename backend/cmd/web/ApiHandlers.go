@@ -114,8 +114,6 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Println("error leyendo el body")
-		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -124,15 +122,11 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 	validator := godantic.Validate{}
 	err = validator.BindJSON(body, &loginData)
 	if err != nil {
-		log.Println(err.Error())
-		log.Println("error dentro del validator de godantic")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	user, err = app.models.GetUserByUsername(r.Context(), loginData.Username)
 	if err != nil {
-		log.Println("error en la query para obtener al usuario")
-		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
