@@ -32,6 +32,13 @@ type uploadResponse struct {
 	URL     string `json:"url"`
 }
 
+type passwordReset struct {
+	email string `json:"email" binding:"required" format:"email"`
+}
+type newPassword struct {
+	password string `json:"password" binding:"required"`
+}
+
 func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 
@@ -274,4 +281,66 @@ func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func (app *aplication) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var user *models.User
+	var email passwordReset
+
+	body , err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	validatior := godantic.Validate{}
+	err = validator.BindJSON(body, &email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	user, err = app.models.GetUserByEmail(r.Context(), email.email)
+	if err != nil || !user{
+		http.Error(w, "Invalid email", http.StatusBadRequest)
+		return
+	}
+	var sender EmailSender
+	sender.destination = user.Email
+	resetStr := sender.generateResetURI()
+	user.ValidationCode = resetStr
+	err = app.models.UpdateUser(r.Context(), user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = sender.sendValidationEmail("Reset your password", "Click the link below to reset your password")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (app *aplication) updatePassword(w http.ResponseWriter, r *http.Request){
+	code := r.URL.Query().Get("code")
+	body ,err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+	var validator godantic.Validate{}
+	var newPassword newPassword
+	err = validator.BindJSON(body, &newPassword)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = app.models.UpdatePassword(r.Context(), code, newPassword.password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

@@ -150,3 +150,36 @@ func (m *Models) UpdateUserCompleted(ctx context.Context, id int) error {
 	}
 	return nil
 }
+
+func (m *Models) UpdateUser(ctx context.Context, u *User) error {
+	tx , err := m.DB.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	stmt := `UPDATE users SET vaidation_code = $1 WHERE username = $2`
+	_, err = tx.Exec(ctx, stmt, u.ValidationCode, u.Username)
+	if err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+func (m *Models) UpdatePassword(ctx context.Context, code , newPassword string) error{
+	tx, err := m.DB.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	stmt := `UPDATE users SET password = $1 WHERE validation_code = $2`
+	hashedPassword, err := m.HashPassword([]byte(newPassword))
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, stmt, string(hashedPassword), code)
+	if err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}

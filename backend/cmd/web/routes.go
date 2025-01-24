@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-
 	"github.com/justinas/alice"
 )
 
@@ -27,7 +26,8 @@ func (app *aplication) routes() http.Handler {
 	serv.HandleFunc("POST /login", app.UserLogin)
 	serv.HandleFunc("POST /create_user", app.CreateUser)
 	serv.Handle("POST /complete_profile", dynamicMiddleware.ThenFunc(app.completeUserProfile))
-
+	serv.HandleFunc("GET /SendResetPassword", app.ResetPassword)
+	serv.HandleFunc("POST /updatePassword", app.updatePassword)
 	standardMiddleware := alice.New(logRequest, commonHeaders)
 
 	return standardMiddleware.Then(serv)

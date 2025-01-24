@@ -15,9 +15,12 @@ type EmailSender struct {
 	validationURI string
 }
 
-func (sender *EmailSender)sendValidationEmail(subject , text string) error {
-	htmlContent := fmt.Sprintf(`<a href="http://localhost:3000/validate?code=%s">Click here to validate your account</a>`, sender.validationURI)
-
+func (sender *EmailSender)sendValidationEmail(subject, mode , text string) error {
+	if mode == "validate" {
+		htmlContent := fmt.Sprintf(`<a href="http://localhost:3000/validate?code=%s">Click here to validate your account</a>`, sender.validationURI)
+	} else if mode == "reset" {
+		htmlContent := fmt.Sprintf(`<a href="http://localhost:3000/resetPassword?code=%s">Click here to reset your password</a>`, sender.validationURI)
+	}
 	e := email.NewEmail()
 	e.From = "Matcha!! <42pong1992@gmail.com>"
 	e.To = []string{sender.destiantion}
