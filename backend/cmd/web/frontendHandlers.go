@@ -88,3 +88,16 @@ func (app *aplication) imageUploader(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func (app *aplication) forgotPassword(w http.ResponseWriter, r *http.Request) {
+	ts, err := template.ParseFiles("ui/html/reset_password.html")
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	err = ts.Execute(w, nil)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+}

@@ -3,10 +3,23 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="static/style.css" />
+        <link rel="stylesheet" href="static/home.css" />
         <title>Document</title>
     </head>
     <body>
-        <!-- <img src="/static/images/cf2327e1c1bcbfb2d64a4b9f8964d474.jpg" /> -->
+        <div id="title">Matcha</div>
+        <div class="signup-div">
+            <form action="/signup" method="submit">
+                <input type="text" name="login" placeholder="login" />
+                <input type="text" name="email" placeholder="email" />
+                <input type="password" name="password" placeholder="password" />
+                <input type="text" name="name" placeholder="first name" />
+                <input type="text" name="surname" placeholder="last name" />
+                <input type="submit" value="Sign up" />
+            </form>
+            <a href="http://localhost:3000/forgotPassword"
+                >forgot your passwor ?</a
+            >
+        </div>
     </body>
 </html>

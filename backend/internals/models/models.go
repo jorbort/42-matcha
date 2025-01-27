@@ -151,22 +151,26 @@ func (m *Models) UpdateUserCompleted(ctx context.Context, id int) error {
 	return nil
 }
 
-func (m *Models) UpdateUser(ctx context.Context, u *User) error {
-	tx , err := m.DB.Begin(ctx)
+func (m *Models) UpdateUser(ctx context.Context, validationCode []byte, email string) error {
+	tx, err := m.DB.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
 
-	stmt := `UPDATE users SET vaidation_code = $1 WHERE username = $2`
-	_, err = tx.Exec(ctx, stmt, u.ValidationCode, u.Username)
+	stmt := `UPDATE users SET vaidation_code = $1 WHERE email = $2`
+	result, err := tx.Exec(ctx, stmt, validationCode, email)
 	if err != nil {
 		return err
+	}
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("email not found")
 	}
 	return tx.Commit(ctx)
 }
 
-func (m *Models) UpdatePassword(ctx context.Context, code , newPassword string) error{
+func (m *Models) UpdatePassword(ctx context.Context, code, newPassword string) error {
 	tx, err := m.DB.Begin(ctx)
 	if err != nil {
 		return err

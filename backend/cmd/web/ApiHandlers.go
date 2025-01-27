@@ -32,11 +32,11 @@ type uploadResponse struct {
 	URL     string `json:"url"`
 }
 
-type passwordReset struct {
-	email string `json:"email" binding:"required" format:"email"`
+type PasswordReset struct {
+	Email string `json:"email" binding:"required" format:"email"`
 }
-type newPassword struct {
-	password string `json:"password" binding:"required"`
+type NewPassword struct {
+	Password string `json:"password" binding:"required"`
 }
 
 func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +89,7 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = sender.sendValidationEmail("Validate your account", "Click the link below to validate your account!!")
+	err = sender.sendValidationEmail("Validate your account", "validate", "Click the link below to validate your account!!")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -285,36 +285,30 @@ func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
 
 func (app *aplication) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var user *models.User
-	var email passwordReset
+	var email PasswordReset
 
-	body , err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
-	validatior := godantic.Validate{}
+	validator := godantic.Validate{}
 	err = validator.BindJSON(body, &email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err = app.models.GetUserByEmail(r.Context(), email.email)
-	if err != nil || !user{
-		http.Error(w, "Invalid email", http.StatusBadRequest)
-		return
-	}
 	var sender EmailSender
-	sender.destination = user.Email
-	resetStr := sender.generateResetURI()
-	user.ValidationCode = resetStr
-	err = app.models.UpdateUser(r.Context(), user)
+	sender.destiantion = user.Email
+	user.ValidationCode = sender.generateValidationURI()
+	err = app.models.UpdateUser(r.Context(), user.ValidationCode, email.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = sender.sendValidationEmail("Reset your password", "Click the link below to reset your password")
+	err = sender.sendValidationEmail("Reset your password", "reset", "Click the link below to reset your password")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -322,22 +316,22 @@ func (app *aplication) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func (app *aplication) updatePassword(w http.ResponseWriter, r *http.Request){
+func (app *aplication) updatePassword(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
-	body ,err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
-	var validator godantic.Validate{}
-	var newPassword newPassword
+	validator := godantic.Validate{}
+	var newPassword NewPassword
 	err = validator.BindJSON(body, &newPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = app.models.UpdatePassword(r.Context(), code, newPassword.password)
+	err = app.models.UpdatePassword(r.Context(), code, newPassword.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
