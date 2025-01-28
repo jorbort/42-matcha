@@ -3,15 +3,21 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="/static/home.css" />
+        <link rel="stylesheet" href="/static/css/home.css" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap"
+            rel="stylesheet"
+        />
         <title>Document</title>
     </head>
     <body>
-        <div id="header">
-            <h1>Matcha !!</h1>
+        <div class="loader" id="header">
+            <div data-glitch="Matcha" class="glitch">Matcha</div>
         </div>
         <div class="signup-div">
-            <form action="/signup" method="submit" id="signup-form">
+            <form id="signup-form">
                 <div id="form-div">
                     <label for="username">Username</label>
                     <input
@@ -49,12 +55,14 @@
                         placeholder="Last name"
                         id="surname"
                     />
-                    <input type="submit" value="Sign up" />
-                    <a href="http://localhost:3000/forgotPassword"
-                        >Forgot your password ?</a
+                    <button type="submit" id="submit">Sign up</button>
+                    <a href="http://localhost:3000/login" id="signin"
+                        >Already have an account?</a
                     >
+                    <p class="inactive" id="message"></p>
                 </div>
             </form>
         </div>
     </body>
+    <script src="/static/js/register.js"></script>
 </html>

@@ -31,6 +31,10 @@ type uploadResponse struct {
 	Message string `json:"message"`
 	URL     string `json:"url"`
 }
+type ErrorResponse struct{
+	Message string `json:"message"`
+	Code int `json:"code"`
+}
 
 type PasswordReset struct {
 	Email string `json:"email" binding:"required" format:"email"`
@@ -41,12 +45,12 @@ type NewPassword struct {
 
 func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
-
+	response := ErrorResponse{}
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	defer r.Body.Close()
@@ -54,16 +58,17 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 	validator := godantic.Validate{}
 	err = validator.BindJSON(body, &user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	passRegexp := regexp.MustCompile(`^[a-zA-Z0-9_#$]{4,25}$`)
 	if !passRegexp.MatchString(string(user.Password)) {
-		http.Error(w, "password must be 4-25 characters long, and alphanumeric values", http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest,"password must be 4-25 characters long, and alphanumeric values" )
 		return
 	}
 	if len(user.Username) < 3 || len(user.Username) > 20 {
-		http.Error(w, "username must be 3-20 characters long", http.StatusBadRequest)
+		http.Error(w, , http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest,"username must be 3-20 characters long" )
 		return
 	}
 	user.Validated = false
@@ -79,14 +84,14 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 		if errors.As(err, &pgErr) {
 			switch pgErr.SQLState() {
 			case "23505":
-				http.Error(w, "Username or email already exists", http.StatusBadRequest)
+				writeJsonError(w, http.StatusBadRequest, "Username or email already exists")
 				return
 			default:
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeJsonError(w, http.StatusBadRequest,http.StatusInternalServerError)
 				return
 			}
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w, http.StatusBadRequest,http.StatusInternalServerError)
 		return
 	}
 	err = sender.sendValidationEmail("Validate your account", "validate", "Click the link below to validate your account!!")
@@ -95,6 +100,9 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
+	response.Message = "User created successfully"
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func (app *aplication) ValidateUser(w http.ResponseWriter, r *http.Request) {
@@ -118,9 +126,11 @@ func (app *aplication) ValidateUser(w http.ResponseWriter, r *http.Request) {
 func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 	var loginData loginData
 	var user *models.User
+	response := ErrorResponse{}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -129,19 +139,23 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 	validator := godantic.Validate{}
 	err = validator.BindJSON(body, &loginData)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	user, err = app.models.GetUserByUsername(r.Context(), loginData.Username)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	if !user.Validated {
+		log.Println("user not validated")
 		http.Error(w, "user not validated", http.StatusBadRequest)
 		return
 	}
 	if !app.models.VerifyPassword([]byte(loginData.Password), []byte(user.Password)) {
+		log.Println(err.Error())
 		http.Error(w, "invalid password", http.StatusBadRequest)
 		return
 	}
@@ -153,6 +167,7 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	refreshToken, err := app.generateJWT(user.Username, time.Now().Add(time.Hour*24*7))
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -337,4 +352,19 @@ func (app *aplication) updatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}
+
+func writeJsonError(w http.ResponseWriter, statusCode int, message string){
+	response := ErrorResponse{
+		Code : statusCode,
+		Message : message,
+	}
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write(jsonResponse)
 }
