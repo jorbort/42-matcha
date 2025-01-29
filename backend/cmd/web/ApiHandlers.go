@@ -67,7 +67,6 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(user.Username) < 3 || len(user.Username) > 20 {
-		http.Error(w, , http.StatusBadRequest)
 		writeJsonError(w, http.StatusBadRequest,"username must be 3-20 characters long" )
 		return
 	}
@@ -87,16 +86,16 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 				writeJsonError(w, http.StatusBadRequest, "Username or email already exists")
 				return
 			default:
-				writeJsonError(w, http.StatusBadRequest,http.StatusInternalServerError)
+				writeJsonError(w,http.StatusInternalServerError, "Internal server error")
 				return
 			}
 		}
-		writeJsonError(w, http.StatusBadRequest,http.StatusInternalServerError)
+		writeJsonError(w,http.StatusInternalServerError, "Internal server error")
 		return
 	}
 	err = sender.sendValidationEmail("Validate your account", "validate", "Click the link below to validate your account!!")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -109,7 +108,7 @@ func (app *aplication) ValidateUser(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	userInfo, err := app.models.UserValidation(r.Context(), code)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	for k, v := range userInfo {
@@ -126,12 +125,11 @@ func (app *aplication) ValidateUser(w http.ResponseWriter, r *http.Request) {
 func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 	var loginData loginData
 	var user *models.User
-	response := ErrorResponse{}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	defer r.Body.Close()
@@ -140,35 +138,34 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 	err = validator.BindJSON(body, &loginData)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	user, err = app.models.GetUserByUsername(r.Context(), loginData.Username)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusNotFound)
+		writeJsonError(w, http.StatusNotFound, err.Error())
 		return
 	}
 	if !user.Validated {
 		log.Println("user not validated")
-		http.Error(w, "user not validated", http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, "user not validated")
 		return
 	}
 	if !app.models.VerifyPassword([]byte(loginData.Password), []byte(user.Password)) {
-		log.Println(err.Error())
-		http.Error(w, "invalid password", http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, "invalid password")
 		return
 	}
 	tokenstring, err := app.generateJWT(user.Username, time.Now().Add(time.Hour*24))
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	refreshToken, err := app.generateJWT(user.Username, time.Now().Add(time.Hour*24*7))
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w, http.StatusInternalServerError,err.Error())
 		return
 	}
 	http.SetCookie(w, &http.Cookie{
@@ -179,12 +176,12 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 		Name:  "refresh-token",
 		Value: refreshToken,
 	})
-	response := loginResponse{
+	LoginResponse := loginResponse{
 		AccessToken:  tokenstring,
 		RefreshToken: refreshToken,
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(LoginResponse)
 }
 
 func (app *aplication) generateJWT(username string, exp time.Time) (string, error) {
@@ -202,7 +199,7 @@ func (app *aplication) generateJWT(username string, exp time.Time) (string, erro
 func (app *aplication) completeUserProfile(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	defer r.Body.Close()
@@ -211,25 +208,25 @@ func (app *aplication) completeUserProfile(w http.ResponseWriter, r *http.Reques
 	validator := godantic.Validate{}
 	err = validator.BindJSON(body, &profile)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	if profile.Latitude < -90 || profile.Latitude > 90 {
-		http.Error(w, "invalid latitude", http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest,  "invalid latitude")
 		return
 	}
 	if profile.Longitude < -180 || profile.Longitude > 180 {
-		http.Error(w, "invalid longitude", http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, "invalid longitude")
 		return
 	}
 	err = app.models.InsertProfileInfo(r.Context(), &profile)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w, http.StatusInternalServerError,err.Error())
 		return
 	}
 	err = app.models.UpdateUserCompleted(r.Context(), profile.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w, http.StatusInternalServerError,err.Error())
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -241,25 +238,25 @@ func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(1048576)
 	if err != nil {
 		log.Println("error parseando multipart-form", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	userIDStr := r.FormValue("user_id")
 	pictureNumberStr := r.FormValue("picture_number")
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, "Invalid user ID")
 		return
 	}
 	pictureNumber, err := strconv.Atoi(pictureNumberStr)
 	if err != nil || pictureNumber < 1 || pictureNumber > 5 {
-		http.Error(w, "Invalid picture number", http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, "Invalid picture number",)
 		return
 	}
 	file, header, err := r.FormFile("image")
 	if err != nil {
 		log.Println("error retieving the file", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	defer file.Close()
@@ -267,27 +264,27 @@ func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
 	valid, err := app.models.ValidateImage(file)
 	if !valid || err != nil {
 		log.Println("invalid image", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	extension := filepath.Ext(header.Filename)
 	fileName, err := app.models.GenerateFileName(extension)
 	if err != nil {
 		log.Println("error generando el file name", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	fileURI, err := app.models.SaveFile(file, fileName)
 	if err != nil {
 		log.Println("error saving file", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	err = app.models.InsertImage(r.Context(), userID, pictureNumber, fileURI)
 	if err != nil {
 		log.Println("error inserting image to db", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	response := uploadResponse{
@@ -304,7 +301,7 @@ func (app *aplication) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w,http.StatusBadRequest, err.Error())
 		return
 	}
 	defer r.Body.Close()
@@ -312,7 +309,7 @@ func (app *aplication) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	validator := godantic.Validate{}
 	err = validator.BindJSON(body, &email)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	var sender EmailSender
@@ -320,12 +317,12 @@ func (app *aplication) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	user.ValidationCode = sender.generateValidationURI()
 	err = app.models.UpdateUser(r.Context(), user.ValidationCode, email.Email)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	err = sender.sendValidationEmail("Reset your password", "reset", "Click the link below to reset your password")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -335,7 +332,7 @@ func (app *aplication) updatePassword(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	defer r.Body.Close()
@@ -343,12 +340,12 @@ func (app *aplication) updatePassword(w http.ResponseWriter, r *http.Request) {
 	var newPassword NewPassword
 	err = validator.BindJSON(body, &newPassword)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	err = app.models.UpdatePassword(r.Context(), code, newPassword.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeJsonError(w,http.StatusInternalServerError, err.Error())
 		return
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
