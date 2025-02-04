@@ -41,6 +41,7 @@ type PasswordReset struct {
 }
 type NewPassword struct {
 	Password string `json:"password" binding:"required"`
+	Code string `json:"code" binding:"required"`
 }
 
 func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -327,7 +328,6 @@ func (app *aplication) ResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *aplication) updatePassword(w http.ResponseWriter, r *http.Request) {
-	code := r.URL.Query().Get("code")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		writeJsonError(w, http.StatusBadRequest, err.Error())
@@ -338,11 +338,18 @@ func (app *aplication) updatePassword(w http.ResponseWriter, r *http.Request) {
 	var newPassword NewPassword
 	err = validator.BindJSON(body, &newPassword)
 	if err != nil {
+		log.Println(err.Error())
 		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	err = app.models.UpdatePassword(r.Context(), code, newPassword.Password)
+	log.Println(newPassword.Password)
+	log.Println(newPassword.Code)
+	err = app.models.UpdatePassword(r.Context(), newPassword.Code, newPassword.Password)
 	if err != nil {
+		if err.Error() == "code not found" {
+			writeJsonError(w, 404, "invalid code")
+			return
+		}
 		writeJsonError(w,http.StatusInternalServerError, err.Error())
 		return
 	}

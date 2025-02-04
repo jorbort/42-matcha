@@ -216,6 +216,7 @@ func (m *Models) UpdateUser(ctx context.Context, validationCode []byte, email st
 }
 
 func (m *Models) UpdatePassword(ctx context.Context, code, newPassword string) error {
+	log.Println("code: ", code)
 	tx, err := m.DB.Begin(ctx)
 	if err != nil {
 		return err
@@ -226,9 +227,14 @@ func (m *Models) UpdatePassword(ctx context.Context, code, newPassword string) e
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, stmt, string(hashedPassword), code)
+	result, err := tx.Exec(ctx, stmt, string(hashedPassword), code)
 	if err != nil {
 		return err
+	}
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		log.Println("code not found")
+		return fmt.Errorf("code not found")
 	}
 	return tx.Commit(ctx)
 }
