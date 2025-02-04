@@ -74,7 +74,7 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 	user.Completed = false
 
 	var sender EmailSender
-	sender.destiantion = user.Email
+	sender.Destiantion = user.Email
 	validationStr := sender.generateValidationURI()
 	user.ValidationCode = validationStr
 	err = app.models.InsertUser(r.Context(), &user)
@@ -296,7 +296,6 @@ func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *aplication) ResetPassword(w http.ResponseWriter, r *http.Request) {
-	var user *models.User
 	var email PasswordReset
 
 	body, err := io.ReadAll(r.Body)
@@ -313,9 +312,8 @@ func (app *aplication) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var sender EmailSender
-	sender.destiantion = user.Email
-	user.ValidationCode = sender.generateValidationURI()
-	err = app.models.UpdateUser(r.Context(), user.ValidationCode, email.Email)
+	sender.Destiantion = email.Email
+	err = app.models.UpdateUser(r.Context(), sender.generateValidationURI(), email.Email)
 	if err != nil {
 		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return

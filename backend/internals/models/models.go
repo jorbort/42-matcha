@@ -203,7 +203,7 @@ func (m *Models) UpdateUser(ctx context.Context, validationCode []byte, email st
 	}
 	defer tx.Rollback(ctx)
 
-	stmt := `UPDATE users SET vaidation_code = $1 WHERE email = $2`
+	stmt := `UPDATE users SET validation_code = $1 WHERE email = $2`
 	result, err := tx.Exec(ctx, stmt, validationCode, email)
 	if err != nil {
 		return err

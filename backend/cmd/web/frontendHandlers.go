@@ -101,3 +101,18 @@ func (app *aplication) forgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (app *aplication) newPasswordView(w http.ResponseWriter, r *http.Request) {
+	ts, err := template.ParseFiles("ui/html/newPassword.html")
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	err = ts.Execute(w, nil)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+}

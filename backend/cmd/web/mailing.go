@@ -11,20 +11,20 @@ import (
 )
 
 type EmailSender struct {
-	destiantion   string
-	validationURI string
+	Destiantion   string
+	ValidationURI string
 }
 
 func (sender *EmailSender) sendValidationEmail(subject, mode, text string) error {
 	var htmlContent string
 	if mode == "validate" {
-		htmlContent = fmt.Sprintf(`<a href="http://localhost:3000/validate?code=%s">Click here to validate your account</a>`, sender.validationURI)
+		htmlContent = fmt.Sprintf(`<a href="http://localhost:3000/validate?code=%s">Click here to validate your account</a>`, sender.ValidationURI)
 	} else if mode == "reset" {
-		htmlContent = fmt.Sprintf(`<a href="http://localhost:3000/resetPassword?code=%s">Click here to reset your password</a>`, sender.validationURI)
+		htmlContent = fmt.Sprintf(`<a href="http://localhost:3000/resetPassword?code=%s">Click here to reset your password</a>`, sender.ValidationURI)
 	}
 	e := email.NewEmail()
 	e.From = "Matcha!! <42pong1992@gmail.com>"
-	e.To = []string{sender.destiantion}
+	e.To = []string{sender.Destiantion}
 	e.Bcc = []string{"42pong1992@gmail.com"}
 	e.Cc = []string{"42pong1992@gmail.com"}
 	e.Subject = subject
@@ -36,6 +36,6 @@ func (sender *EmailSender) sendValidationEmail(subject, mode, text string) error
 func (sender *EmailSender) generateValidationURI() []byte {
 	b := make([]byte, 8)
 	rand.Read(b)
-	sender.validationURI = hex.EncodeToString(b)
-	return []byte(sender.validationURI)
+	sender.ValidationURI = hex.EncodeToString(b)
+	return []byte(sender.ValidationURI)
 }

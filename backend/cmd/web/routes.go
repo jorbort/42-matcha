@@ -21,6 +21,7 @@ func (app *aplication) routes() http.Handler {
 	serv.Handle("GET /testPage", dynamicMiddleware.ThenFunc(app.home))
 	serv.HandleFunc("GET /imageUpload", app.imageUploader)
 	serv.HandleFunc("GET /forgotPassword", app.forgotPassword)
+	serv.HandleFunc("GET /resetPassword", app.newPasswordView)
 
 	// api routes
 	serv.Handle("POST /uploadImg", dynamicMiddleware.ThenFunc(app.ImageEndpoint))
@@ -28,7 +29,7 @@ func (app *aplication) routes() http.Handler {
 	serv.HandleFunc("POST /login", app.UserLogin)
 	serv.HandleFunc("POST /create_user", app.CreateUser)
 	serv.Handle("POST /complete_profile", dynamicMiddleware.ThenFunc(app.completeUserProfile))
-	serv.HandleFunc("GET /SendResetPassword", app.ResetPassword)
+	serv.HandleFunc("POST /SendResetPassword", app.ResetPassword)
 	serv.HandleFunc("POST /updatePassword", app.updatePassword)
 	standardMiddleware := alice.New(logRequest, commonHeaders)
 
