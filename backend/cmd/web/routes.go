@@ -18,7 +18,7 @@ func (app *aplication) routes() http.Handler {
 	serv.HandleFunc("GET /login", app.LoginPage)
 	serv.HandleFunc("GET /complete-profile", app.completeProfile)
 	serv.HandleFunc("GET /{$}", app.home)
-	serv.Handle("GET /testPage", dynamicMiddleware.ThenFunc(app.home))
+	serv.Handle("GET /profile", dynamicMiddleware.ThenFunc(app.profile))
 	serv.HandleFunc("GET /imageUpload", app.imageUploader)
 	serv.HandleFunc("GET /forgotPassword", app.forgotPassword)
 	serv.HandleFunc("GET /resetPassword", app.newPasswordView)

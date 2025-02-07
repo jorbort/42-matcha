@@ -177,12 +177,8 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 		Name:  "refresh-token",
 		Value: refreshToken,
 	})
-	LoginResponse := loginResponse{
-		AccessToken:  tokenstring,
-		RefreshToken: refreshToken,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(LoginResponse)
+
+	http.Redirect(w, r, "http://localhost:3000/profile", http.StatusSeeOther)
 }
 
 func (app *aplication) generateJWT(username string, exp time.Time) (string, error) {
