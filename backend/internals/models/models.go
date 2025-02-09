@@ -119,27 +119,23 @@ func (m *Models) VerifyPassword(password, hash []byte) bool {
 	return err == nil
 }
 
-func (m *Models) UserValidation(ctx context.Context, code string) (map[int]bool, error) {
+func (m *Models) UserValidation(ctx context.Context, code string) error {
 	tx, err := m.DB.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer tx.Rollback(ctx)
 
-	userInfo := make(map[int]bool)
-	var id int
-	var completed bool
-	stmt := `UPDATE users SET validated = true WHERE validation_code = $1 RETURNING id , completed`
-	err = tx.QueryRow(ctx, stmt, code).Scan(&id, &completed)
+	stmt := `UPDATE users SET validated = true WHERE validation_code = $1`
+	_, err = tx.Exec(ctx, stmt, code)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = tx.Commit(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	userInfo[id] = completed
-	return userInfo, nil
+	return nil
 }
 
 func (m *Models) GetUserByUsername(ctx context.Context, username string) (*User, error) {

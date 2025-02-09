@@ -1,0 +1,13 @@
+html {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    background-color: #f2e9e1;
+    font-family: "Cormorant Garamond";
+}
+
+h1 {
+    color: #286983;
+}

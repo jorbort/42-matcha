@@ -22,6 +22,7 @@ func (app *aplication) routes() http.Handler {
 	serv.HandleFunc("GET /imageUpload", app.imageUploader)
 	serv.HandleFunc("GET /forgotPassword", app.forgotPassword)
 	serv.HandleFunc("GET /resetPassword", app.newPasswordView)
+	serv.HandleFunc("GET /validated", app.validated)
 
 	// api routes
 	serv.Handle("POST /uploadImg", dynamicMiddleware.ThenFunc(app.ImageEndpoint))

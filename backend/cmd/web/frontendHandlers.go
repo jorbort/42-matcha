@@ -23,15 +23,9 @@ func (app *aplication) home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (app *aplication) profile(w http.ResponseWriter, r *http.Request){
-	ts , err := template.ParseFiles("ui/html/profile.html")
-	if err != nil{
-		log.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	err = ts.Execute(w, nil)
-	if err != nil{
+func (app *aplication) profile(w http.ResponseWriter, r *http.Request) {
+	err := app.templates.ExecuteTemplate(w, "profile", nil)
+	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -115,16 +109,9 @@ func (app *aplication) newPasswordView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-
-func (app *aplication) profileView(w http.ResponseWriter, r *http.Request) {
-	ts, err := template.ParseFiles("ui/html/user_profile.html")
-	if err != nil{
-		log.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	err = ts.Execute(w, nil)
-	if err != nil{
+func (app *aplication) validated(w http.ResponseWriter, r *http.Request) {
+	err := app.templates.ExecuteTemplate(w, "validation", nil)
+	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return

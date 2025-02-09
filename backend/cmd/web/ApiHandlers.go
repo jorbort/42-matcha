@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -31,9 +30,9 @@ type uploadResponse struct {
 	Message string `json:"message"`
 	URL     string `json:"url"`
 }
-type ErrorResponse struct{
+type ErrorResponse struct {
 	Message string `json:"message"`
-	Code int `json:"code"`
+	Code    int    `json:"code"`
 }
 
 type PasswordReset struct {
@@ -41,7 +40,7 @@ type PasswordReset struct {
 }
 type NewPassword struct {
 	Password string `json:"password" binding:"required"`
-	Code string `json:"code" binding:"required"`
+	Code     string `json:"code" binding:"required"`
 }
 
 func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -64,11 +63,11 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	passRegexp := regexp.MustCompile(`^[a-zA-Z0-9_#$]{4,25}$`)
 	if !passRegexp.MatchString(string(user.Password)) {
-		writeJsonError(w, http.StatusBadRequest,"password must be 4-25 characters long, and alphanumeric values" )
+		writeJsonError(w, http.StatusBadRequest, "password must be 4-25 characters long, and alphanumeric values")
 		return
 	}
 	if len(user.Username) < 3 || len(user.Username) > 20 {
-		writeJsonError(w, http.StatusBadRequest,"username must be 3-20 characters long" )
+		writeJsonError(w, http.StatusBadRequest, "username must be 3-20 characters long")
 		return
 	}
 	user.Validated = false
@@ -87,11 +86,11 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 				writeJsonError(w, http.StatusBadRequest, "Username or email already exists")
 				return
 			default:
-				writeJsonError(w,http.StatusInternalServerError, "Internal server error")
+				writeJsonError(w, http.StatusInternalServerError, "Internal server error")
 				return
 			}
 		}
-		writeJsonError(w,http.StatusInternalServerError, "Internal server error")
+		writeJsonError(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 	err = sender.sendValidationEmail("Validate your account", "validate", "Click the link below to validate your account!!")
@@ -107,20 +106,12 @@ func (app *aplication) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (app *aplication) ValidateUser(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
-	userInfo, err := app.models.UserValidation(r.Context(), code)
+	err := app.models.UserValidation(r.Context(), code)
 	if err != nil {
 		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	for k, v := range userInfo {
-		profileURI := fmt.Sprintf("/complete-profile?id=%d", k)
-		if v == false {
-			http.Redirect(w, r, profileURI, http.StatusSeeOther)
-		} else {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-		}
-		break
-	}
+	http.Redirect(w, r, "http://localhost:3000/validated", http.StatusSeeOther)
 }
 
 func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
@@ -166,7 +157,7 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := app.generateJWT(user.Username, time.Now().Add(time.Hour*24*7))
 	if err != nil {
 		log.Println(err.Error())
-		writeJsonError(w, http.StatusInternalServerError,err.Error())
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	http.SetCookie(w, &http.Cookie{
@@ -209,7 +200,7 @@ func (app *aplication) completeUserProfile(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if profile.Latitude < -90 || profile.Latitude > 90 {
-		writeJsonError(w, http.StatusBadRequest,  "invalid latitude")
+		writeJsonError(w, http.StatusBadRequest, "invalid latitude")
 		return
 	}
 	if profile.Longitude < -180 || profile.Longitude > 180 {
@@ -218,12 +209,12 @@ func (app *aplication) completeUserProfile(w http.ResponseWriter, r *http.Reques
 	}
 	err = app.models.InsertProfileInfo(r.Context(), &profile)
 	if err != nil {
-		writeJsonError(w, http.StatusInternalServerError,err.Error())
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	err = app.models.UpdateUserCompleted(r.Context(), profile.ID)
 	if err != nil {
-		writeJsonError(w, http.StatusInternalServerError,err.Error())
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -247,7 +238,7 @@ func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 	pictureNumber, err := strconv.Atoi(pictureNumberStr)
 	if err != nil || pictureNumber < 1 || pictureNumber > 5 {
-		writeJsonError(w, http.StatusBadRequest, "Invalid picture number",)
+		writeJsonError(w, http.StatusBadRequest, "Invalid picture number")
 		return
 	}
 	file, header, err := r.FormFile("image")
@@ -297,7 +288,7 @@ func (app *aplication) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		writeJsonError(w,http.StatusBadRequest, err.Error())
+		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	defer r.Body.Close()
@@ -346,16 +337,16 @@ func (app *aplication) updatePassword(w http.ResponseWriter, r *http.Request) {
 			writeJsonError(w, 404, "invalid code")
 			return
 		}
-		writeJsonError(w,http.StatusInternalServerError, err.Error())
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
-func writeJsonError(w http.ResponseWriter, statusCode int, message string){
+func writeJsonError(w http.ResponseWriter, statusCode int, message string) {
 	response := ErrorResponse{
-		Code : statusCode,
-		Message : message,
+		Code:    statusCode,
+		Message: message,
 	}
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {

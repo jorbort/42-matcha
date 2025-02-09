@@ -21,7 +21,7 @@ body {
     align-items: center;
 }
 #form-div {
-    padding: 2em;
+    padding: 3em;
     margin: 1em;
     background-color: #fffaf3;
     display: flex;
@@ -30,7 +30,7 @@ body {
     justify-content: center;
     width: 20vw;
     left: 50%;
-    height: 40vh;
+    height: 45vh;
     border-radius: 8px;
     box-shadow: 2px 2px 2px 3px rgba(223, 218, 217, 0.7);
 }

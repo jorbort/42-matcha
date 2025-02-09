@@ -25,11 +25,12 @@ document
         return response.json();
       })
       .then((data) => {
-        div.innerHTML = "User created successfully, sent validation email";
+        div.innerHTML = "User created successfully, validation email sent";
         div.className = "active";
       })
       .catch((error) => {
-        div.innerHTML = "Error creating user: " + error.message;
+        div.innerHTML =
+          "Error creating user: username or email already exists or password is too weak";
         div.className = "active";
       });
   });

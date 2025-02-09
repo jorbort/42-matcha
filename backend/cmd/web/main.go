@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -14,7 +15,8 @@ import (
 )
 
 type aplication struct {
-	models *models.Models
+	models    *models.Models
+	templates *template.Template
 }
 
 func main() {
@@ -27,7 +29,12 @@ func main() {
 	}
 	defer pool.Close()
 
-	app := &aplication{models: &models.Models{DB: pool}}
+	templates := initTempaltes()
+
+	app := &aplication{
+		models:    &models.Models{DB: pool},
+		templates: templates,
+	}
 
 	if err := app.models.CreateTables(ctx); err != nil {
 		log.Fatal(err.Error())
@@ -63,4 +70,11 @@ func createDb(dns string, ctx context.Context) (*pgxpool.Pool, error) {
 	}
 
 	return pool, nil
+}
+
+func initTempaltes() *template.Template {
+	templates := template.Must(template.ParseFiles("ui/html/header_template.html",
+		"ui/html/profile.html",
+		"ui/html/validation.html"))
+	return templates
 }
