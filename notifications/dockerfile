@@ -1,0 +1,15 @@
+FROM golang:1.23.4-bookworm
+
+WORKDIR /app
+
+COPY go.sh /app/go.sh
+RUN chmod +x /app/go.sh
+
+COPY . /app
+
+RUN apt-get update && apt-get install -y netcat-openbsd
+RUN apt-get install -y libgeos-dev
+RUN export PKG_CONFIG_PATH=/path/to/geos/lib/pkgconfig:$PKG_CONFIG_PATH
+EXPOSE 3002
+
+ENTRYPOINT ["/app/go.sh"]

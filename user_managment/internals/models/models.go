@@ -49,6 +49,23 @@ func (m *Models) CreateTables(ctx context.Context) error {
             image_url varchar(255) NOT NULL,
             UNIQUE(user_id, image_number)
         );`,
+
+		`CREATE TABLE IF NOT EXISTS conversations(
+        	id SERIAL PRIMARY KEY,
+         user1_id integer REFERENCES users(id),
+         user2_id integer REFERENCES users(id),
+         created_at TIMESTAMP with TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+         unique(user1_id, user2_id)
+        );`,
+
+		`CREATE TABLE IF NOT EXISTS messages(
+        	id SERIAL PRIMARY KEY,
+         	conversation_id integer REFERENCES conversations(id),
+          	sender_id integer REFERENCES users(id),
+            receiver_id integer REFERENCES users(id),
+            message TEXT NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );`,
 	}
 
 	for _, query := range createTableQueries {

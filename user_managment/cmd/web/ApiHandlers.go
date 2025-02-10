@@ -15,7 +15,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/grahms/godantic"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jorbort/42-matcha/backend/internals/models"
+	"github.com/jorbort/42-matcha/user_managment/internals/models"
 )
 
 type loginData struct {

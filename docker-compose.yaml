@@ -1,6 +1,6 @@
 services:
   app:
-    build: ./backend
+    build: ./user_managment
     ports:
       - "3000:3000"
     volumes:
@@ -12,6 +12,21 @@ services:
     restart: always
     env_file:
       - .env
+
+  chat:
+    build: ./chat
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    networks:
+      - matcha
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - chat_data:/app
+
   postgres:
     build: ./postgres
     restart: always
@@ -45,9 +60,14 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: "./backend"
+      device: "./user_managment"
       o: bind
-
+  chat_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: "./chat"
+      o: bind
 networks:
   matcha:
     driver: bridge

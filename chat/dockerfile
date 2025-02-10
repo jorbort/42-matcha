@@ -2,15 +2,14 @@ FROM golang:1.23.4-bookworm
 
 WORKDIR /app
 
-COPY go.sh /app/go.sh
-RUN chmod +x /app/go.sh
+COPY chat.sh /app/chat.sh
+RUN chmod +x /app/chat.sh
 
 COPY . /app
 
 RUN apt-get update && apt-get install -y netcat-openbsd
-RUN apt-get install -y libgeos-dev 
+RUN apt-get install -y libgeos-dev
 RUN export PKG_CONFIG_PATH=/path/to/geos/lib/pkgconfig:$PKG_CONFIG_PATH
-EXPOSE 3000
+EXPOSE 3001
 
-ENTRYPOINT ["/app/go.sh"]
-
+ENTRYPOINT ["/app/chat.sh"]
