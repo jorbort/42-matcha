@@ -64,3 +64,16 @@ svg:hover {
     scale: 1.2;
     animation: ease-in-out 0.7s;
 }
+.hide {
+    display: none;
+}
+
+#message {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3em;
+    text-align: center;
+    align-self: center;
+}

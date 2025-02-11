@@ -21,8 +21,12 @@ document
         message.style.color = "#ea9d34";
         message.style.textShadow = "1px 1px 1px #ea9d34";
         throw error;
-      } else if (response.redirected) {
-        window.location.href = response.url;
+      } else if (response.ok) {
+        const data = await response.json();
+        console.log(data);
+        localStorage.setItem("username", data.username);
+        localStorage.setItem("profile_completed", data.is_completed);
+        window.location.href = "http://localhost:3000/profile";
       }
     } catch (error) {}
   });

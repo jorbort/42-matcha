@@ -23,8 +23,8 @@ type loginData struct {
 	Password string `json:"password" binding:"required"`
 }
 type loginResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	IsCompleted bool   `json:"is_completed"`
+	Username    string `json:"username"`
 }
 type uploadResponse struct {
 	Message string `json:"message"`
@@ -168,8 +168,13 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 		Name:  "refresh-token",
 		Value: refreshToken,
 	})
-
-	http.Redirect(w, r, "http://localhost:3000/profile", http.StatusSeeOther)
+	response := loginResponse{
+		IsCompleted: user.Completed,
+		Username:    user.Username,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+	// http.Redirect(w, r, "http://localhost:3000/profile", http.StatusSeeOther)
 }
 
 func (app *aplication) generateJWT(username string, exp time.Time) (string, error) {
