@@ -31,6 +31,19 @@ func (app *aplication) profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+func (app *aplication) settingsPage(w http.ResponseWriter, r *http.Request) {
+	data := struct {
+		CSSLink string
+	}{
+		CSSLink: "static/css/settings.css",
+	}
+	err := app.templates.ExecuteTemplate(w, "settings", data)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+}
 
 func (app *aplication) LoginPage(w http.ResponseWriter, r *http.Request) {
 	ts, err := template.ParseFiles("ui/html/login.html")

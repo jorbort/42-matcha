@@ -26,6 +26,7 @@ document
         console.log(data);
         localStorage.setItem("username", data.username);
         localStorage.setItem("profile_completed", data.is_completed);
+        localStorage.setItem("userID", data.user_id);
         window.location.href = "http://localhost:3000/profile";
       }
     } catch (error) {}

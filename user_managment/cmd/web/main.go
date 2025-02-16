@@ -73,8 +73,11 @@ func createDb(dns string, ctx context.Context) (*pgxpool.Pool, error) {
 }
 
 func initTempaltes() *template.Template {
-	templates := template.Must(template.ParseFiles("ui/html/header_template.html",
+	templates := template.Must(template.ParseFiles("ui/html/templates/header_template.html",
+		"ui/html/templates/head.html",
+		"ui/html/templates/htmx.html",
 		"ui/html/profile.html",
-		"ui/html/validation.html"))
+		"ui/html/validation.html",
+		"ui/html/settings.html"))
 	return templates
 }

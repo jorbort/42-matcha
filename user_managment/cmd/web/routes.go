@@ -13,6 +13,7 @@ func (app *aplication) routes() http.Handler {
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 
+	serv.Handle("GET /ui/static/", http.StripPrefix("/ui/static", fileServer))
 	serv.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 	//frontend routes that serve html
 	serv.HandleFunc("GET /login", app.LoginPage)
@@ -23,6 +24,7 @@ func (app *aplication) routes() http.Handler {
 	serv.HandleFunc("GET /forgotPassword", app.forgotPassword)
 	serv.HandleFunc("GET /resetPassword", app.newPasswordView)
 	serv.HandleFunc("GET /validated", app.validated)
+	serv.Handle("GET /settings", dynamicMiddleware.ThenFunc(app.settingsPage))
 
 	// api routes
 	serv.Handle("POST /uploadImg", dynamicMiddleware.ThenFunc(app.ImageEndpoint))

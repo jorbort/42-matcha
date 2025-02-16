@@ -25,6 +25,7 @@ type loginData struct {
 type loginResponse struct {
 	IsCompleted bool   `json:"is_completed"`
 	Username    string `json:"username"`
+	UserId      int    `json:"user_id"`
 }
 type uploadResponse struct {
 	Message string `json:"message"`
@@ -171,10 +172,10 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 	response := loginResponse{
 		IsCompleted: user.Completed,
 		Username:    user.Username,
+		UserId:      user.ID,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
-	// http.Redirect(w, r, "http://localhost:3000/profile", http.StatusSeeOther)
 }
 
 func (app *aplication) generateJWT(username string, exp time.Time) (string, error) {
@@ -273,19 +274,18 @@ func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
 		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-
+	log.Println(fileURI)
 	err = app.models.InsertImage(r.Context(), userID, pictureNumber, fileURI)
 	if err != nil {
 		log.Println("error inserting image to db", err)
 		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	response := uploadResponse{
-		Message: "Image uploaded successfully",
-		URL:     fileURI,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	w.Header().Set("Content-Type", "text/html")
+	htmlResponse := `<div class="upload-response">
+			<p>Image uploaded successfully!</p>
+		</div>`
+	w.Write([]byte(htmlResponse))
 }
 
 func (app *aplication) ResetPassword(w http.ResponseWriter, r *http.Request) {

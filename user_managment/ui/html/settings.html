@@ -1,12 +1,110 @@
-<!DOCTYPE html>
+{{define "settings"}}
+<!doctype html>
 <html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Document</title>
-</head>
-<body>
-	<h1>complete profile for user number {{.UserID}}</h1>
-	<div>{{.UserID}}</div>
-</body>
+    {{template "head" .}}
+    <body>
+        {{template "header" .}}
+
+        <div id="settingDiv">
+            <h1>Settings</h1>
+            <form id="info-Form">
+                <h3>Gender</h3>
+                <div class="radioDiv">
+                    <label for="male">Male</label>
+                    <input
+                        type="radio"
+                        name="gender"
+                        class="maleRadio"
+                        id="male"
+                        value="Male"
+                    />
+                    <label for="female">Female</label>
+                    <input
+                        type="radio"
+                        id="female"
+                        class="femaleRadio"
+                        name="gender"
+                        value="Female"
+                    />
+                </div>
+                <h3>Preferences</h3>
+                <div class="radioDiv">
+                    <label>Both</label>
+                    <input type="radio" name="preferences" value="Both" />
+                    <label>Men</label>
+                    <input
+                        type="radio"
+                        class="maleRadio"
+                        name="preferences"
+                        value="Men"
+                    />
+                    <label>Women</label>
+                    <input
+                        type="radio"
+                        class="femaleRadio"
+                        name="preferences"
+                        value="Women"
+                    />
+                </div>
+                <label for="biography">Biography</label>
+                <input
+                    type="text"
+                    placeholder="Biography"
+                    maxlength="250"
+                    required
+                />
+                <label for="interests">Interests</label>
+                <input
+                    type="text"
+                    placeholder="Interests"
+                    maxlength="250"
+                    required
+                />
+                <button type="submit">Update</button>
+            </form>
+        </div>
+        <br /><br />
+        <div id="images-div">
+            <h1>Upload an Image</h1>
+            <form
+                id="uploadForm"
+                enctype="multipart/form-data"
+                hx-post="/uploadImg"
+                hx-target="#img-response"
+            >
+                <label for="picture_number">Picture Number (1-5):</label>
+                <select
+                    type="number"
+                    id="picture_number"
+                    name="picture_number"
+                    min="1"
+                    max="5"
+                    required
+                >
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <br /><br />
+                <label for="image">Select Image:</label>
+                <input
+                    type="file"
+                    id="image"
+                    name="image"
+                    accept="image/*"
+                    required
+                />
+                <input type="hidden" name="user_id" id="userId" value="" />
+                <br /><br />
+                <button type="submit">Upload</button>
+                <br />
+                <div id="img-response"></div>
+            </form>
+        </div>
+        {{template "htmx" .}}
+        <script src="static/js/settings.js"></script>
+    </body>
 </html>
+{{end}}
