@@ -15,19 +15,19 @@ type User struct {
 }
 
 type ProfileInfo struct {
-	ID                int      `json:"id" `
+	ID                int      `json:"id" binding:"ignore"`
 	Gender            string   `json:"gender" binding:"required"`
-	Sexual_preference string   `json:"Sexual_preference" binding:"required" enum:"men,women,both"`
-	Bio               string   `json:"Bio" binding:"required" max:"500"`
-	Interests         []string `json:"Interests" binding:"required" max:"500"`
+	Sexual_preference string   `json:"preferences" binding:"required" enum:"Men,Women,Both"`
+	Bio               string   `json:"bio" binding:"required" max:"500"`
+	Interests         []string `json:"interests" binding:"required" max:"500"`
 	Age               int      `json:"age" binding:"required"`
-	Latitude          float64  `json:"Latitude" binding:"required" `
-	Longitude         float64  `json:"Longitude" binding:"required" `
+	Latitude          float64  `json:"Latitude" binding:"ignore" `
+	Longitude         float64  `json:"Longitude" binding:"ignore" `
 }
 
 type Image struct {
 	ID         int    `json:"id" binding:"ignore"`
-	UserID     int    `json:"user_id" binding:"required"`
+	UserID     int    `json:"user_id" binding:"ignorez"`
 	Img_URI    string `json:"img" binding:"ignore"`
 	Img_number int    `json:"img_number" binding:"required"`
 }

@@ -78,6 +78,7 @@ func initTempaltes() *template.Template {
 		"ui/html/templates/htmx.html",
 		"ui/html/profile.html",
 		"ui/html/validation.html",
-		"ui/html/settings.html"))
+		"ui/html/settings.html",
+		"ui/html/templates/logOut.html"))
 	return templates
 }

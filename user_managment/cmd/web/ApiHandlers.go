@@ -5,15 +5,18 @@ import (
 	"errors"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/grahms/godantic"
+	"github.com/ipinfo/go/v2/ipinfo"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jorbort/42-matcha/user_managment/internals/models"
 )
@@ -169,6 +172,11 @@ func (app *aplication) UserLogin(w http.ResponseWriter, r *http.Request) {
 		Name:  "refresh-token",
 		Value: refreshToken,
 	})
+	http.SetCookie(w, &http.Cookie{
+		Name:  "user-id",
+		Value: strconv.Itoa(user.ID),
+	})
+
 	response := loginResponse{
 		IsCompleted: user.Completed,
 		Username:    user.Username,
@@ -191,27 +199,79 @@ func (app *aplication) generateJWT(username string, exp time.Time) (string, erro
 }
 
 func (app *aplication) completeUserProfile(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	userIDStr, err := r.Cookie("user-id")
 	if err != nil {
-		writeJsonError(w, http.StatusBadRequest, err.Error())
+		http.Error(w, "<p>invalid user ID</p>", 200)
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "<p>invalid form</p>", 200)
 		return
 	}
-	defer r.Body.Close()
+	formData := make(map[string]interface{})
+	for key, values := range r.Form {
+		if len(values) == 1 {
+			formData[key] = values[0]
+		} else {
+			formData[key] = values
+		}
+	}
+	if ageStr, ok := formData["age"].(string); ok {
+		ageInt, err := strconv.Atoi(ageStr)
+		if err != nil {
+			http.Error(w, "invalid age value", http.StatusBadRequest)
+			return
+		}
+		formData["age"] = ageInt
+	}
+	if interests, ok := formData["interests"].(string); ok {
+		splitedInterests := strings.Split(interests, ",")
+		var interestsSlice []string
+		for _, interest := range splitedInterests {
+			trimmed := strings.TrimSpace(interest)
+			if trimmed != "" {
+				interestsSlice = append(interestsSlice, trimmed)
+			}
+		}
+		formData["interests"] = interestsSlice
+	}
+
+	body, err := json.Marshal(formData)
+	if err != nil {
+		http.Error(w, "<p>invalid form</p>", 200)
+		return
+	}
 	var profile models.ProfileInfo
 
 	validator := godantic.Validate{}
 	err = validator.BindJSON(body, &profile)
 	if err != nil {
+		log.Println(string(body))
+		log.Println(err.Error())
 		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if profile.Latitude < -90 || profile.Latitude > 90 {
-		writeJsonError(w, http.StatusBadRequest, "invalid latitude")
+	var userAddr string
+	latitude, errLat := r.Cookie("latitude")
+	longitude, errLong := r.Cookie("longitude")
+	if errLat != nil || errLong != nil {
+		userAddr = r.RemoteAddr
+		client := ipinfo.NewClient(nil, nil, os.Getenv("IPINFOTKN"))
+		info, err := client.GetIPInfo(net.ParseIP(userAddr))
+		if err != nil {
+			log.Println(err.Error())
+			http.Error(w, "<p>failed to fetch user location</p>", 200)
+		}
+		log.Println(info)
+	}
+	profile.Latitude, errLat = strconv.ParseFloat(latitude.Value, 64)
+	profile.Longitude, errLong = strconv.ParseFloat(longitude.Value, 64)
+	if errLat != nil || errLong != nil {
+		http.Error(w, "<p>invalid location</p>", 200)
 		return
 	}
-	if profile.Longitude < -180 || profile.Longitude > 180 {
-		writeJsonError(w, http.StatusBadRequest, "invalid longitude")
-		return
+	profile.ID, err = strconv.Atoi(userIDStr.Value)
+	if err != nil {
+		http.Error(w, "invalid user ID", http.StatusBadRequest)
 	}
 	err = app.models.InsertProfileInfo(r.Context(), &profile)
 	if err != nil {
@@ -220,31 +280,37 @@ func (app *aplication) completeUserProfile(w http.ResponseWriter, r *http.Reques
 	}
 	err = app.models.UpdateUserCompleted(r.Context(), profile.ID)
 	if err != nil {
-		writeJsonError(w, http.StatusInternalServerError, err.Error())
+		http.Error(w, "<p>error updating user </p> ", 200)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(200)
+	w.Header().Set("Content-Type", "text/html")
+	htmlResponse := `
+			<p>Profile updated sucsessfully! </p>`
+	w.Write([]byte(htmlResponse))
 }
 
 func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
-
+	userIDStr, err := r.Cookie("user-id")
+	if err != nil {
+		http.Error(w, "invalid User ID", http.StatusBadRequest)
+	}
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
-	err := r.ParseMultipartForm(1048576)
+	err = r.ParseMultipartForm(1048576)
 	if err != nil {
 		log.Println("error parseando multipart-form", err)
 		writeJsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	userIDStr := r.FormValue("user_id")
 	pictureNumberStr := r.FormValue("picture_number")
-	userID, err := strconv.Atoi(userIDStr)
+	userID, err := strconv.Atoi(userIDStr.Value)
 	if err != nil {
-		writeJsonError(w, http.StatusBadRequest, "Invalid user ID")
+		http.Error(w, "invalid User Id", 200)
 		return
 	}
 	pictureNumber, err := strconv.Atoi(pictureNumberStr)
 	if err != nil || pictureNumber < 1 || pictureNumber > 5 {
-		writeJsonError(w, http.StatusBadRequest, "Invalid picture number")
+		http.Error(w, "Invalid picture number", 200)
 		return
 	}
 	file, header, err := r.FormFile("image")
@@ -258,7 +324,7 @@ func (app *aplication) ImageEndpoint(w http.ResponseWriter, r *http.Request) {
 	valid, err := app.models.ValidateImage(file)
 	if !valid || err != nil {
 		log.Println("invalid image", err)
-		writeJsonError(w, http.StatusBadRequest, err.Error())
+		http.Error(w, "<p>invalid image</p>", 200)
 		return
 	}
 	extension := filepath.Ext(header.Filename)

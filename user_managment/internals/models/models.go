@@ -206,6 +206,9 @@ func (m *Models) UpdateUserCompleted(ctx context.Context, id int) error {
 	if err != nil {
 		return err
 	}
+	if err = tx.Commit(ctx); err != nil {
+		return err
+	}
 	return nil
 }
 

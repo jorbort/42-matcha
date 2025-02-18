@@ -7,7 +7,11 @@
 
         <div id="settingDiv">
             <h1>Settings</h1>
-            <form id="info-Form">
+            <form
+                id="info-Form"
+                hx-post="/complete_profile"
+                hx-target="#info-response"
+            >
                 <h3>Gender</h3>
                 <div class="radioDiv">
                     <label for="male">Male</label>
@@ -46,21 +50,36 @@
                         value="Women"
                     />
                 </div>
-                <label for="biography">Biography</label>
+                <label for="bio">Biography</label>
                 <input
                     type="text"
                     placeholder="Biography"
                     maxlength="250"
+                    name="bio"
                     required
                 />
                 <label for="interests">Interests</label>
                 <input
                     type="text"
+                    pattern="^\s*[^,]+(\s*,\s*[^,]+)*\s*$"
+                    title="Please enter a comma separated list (e.g. music, hiking, reading)"
                     placeholder="Interests"
-                    maxlength="250"
+                    name="interests"
+                    maxlength="400"
                     required
                 />
+                <label for="age">Age</label>
+                <input
+                    type="number"
+                    name="age"
+                    placeholder="Age"
+                    required
+                    min="18"
+                    max="140"
+                />
                 <button type="submit">Update</button>
+                <br />
+                <div id="info-response"></div>
             </form>
         </div>
         <br /><br />
@@ -103,7 +122,7 @@
                 <div id="img-response"></div>
             </form>
         </div>
-        {{template "htmx" .}}
+        {{template "htmx" .}} {{template "logOut" .}}
         <script src="static/js/settings.js"></script>
     </body>
 </html>
