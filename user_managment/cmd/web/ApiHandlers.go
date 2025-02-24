@@ -260,8 +260,11 @@ func (app *aplication) completeUserProfile(w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			log.Println(err.Error())
 			http.Error(w, "<p>failed to fetch user location</p>", 200)
+			return
 		}
 		log.Println(info)
+		//falta implementar la gestion cuando no se puede obtener la localizacion mediante gps
+		return
 	}
 	profile.Latitude, errLat = strconv.ParseFloat(latitude.Value, 64)
 	profile.Longitude, errLong = strconv.ParseFloat(longitude.Value, 64)
